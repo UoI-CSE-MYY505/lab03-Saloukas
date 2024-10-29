@@ -102,5 +102,63 @@ rgb888_to_rgb565:
 # Write your code here.
 # You may move the "return" instruction (jalr zero, ra, 0).
     jalr zero, ra, 0
+    
+    rgb888_to_rgb565:
+    # Save s-registers on the stack
+    addi sp, sp, -16           # Allocate stack space
+    sw s0, 0(sp)               # Save s0 to stack
+    sw s1, 4(sp)               # Save s1 to stack
+    sw s2, 8(sp)               # Save s2 to stack
+    sw s3, 12(sp)              # Save s3 to stack
+
+    # Calculate the total number of pixels
+    mul s0, a1, a2             # s0 = a1 * a2 (total pixels)
+    
+    # Initialize pointers
+    mv s1, a0                  # s1 = source pointer for RGB888
+    mv s2, a3                  # s2 = destination pointer for RGB565
+    li s3, 0                   # Pixel counter
+
+loop_convert:
+    bge s3, s0, end_convert    # If we've processed all pixels, exit loop
+
+    # Load 3 bytes for each RGB color component
+    lbu t0, 0(s1)              # Load Red (8 bits) into t0
+    lbu t1, 1(s1)              # Load Green (8 bits) into t1
+    lbu t2, 2(s1)              # Load Blue (8 bits) into t2
+
+    # Convert to RGB565 format
+    srl t0, t0, 3              # Shift Red right by 3 for 5 bits
+    srl t1, t1, 2              # Shift Green right by 2 for 6 bits
+    srl t2, t2, 3              # Shift Blue right by 3 for 5 bits
+
+    # Combine the values into a 16-bit RGB565 format
+    slli t0, t0, 11            # Shift Red to the left by 11 bits
+    slli t1, t1, 5             # Shift Green to the left by 5 bits
+    or t3, t0, t1              # Combine Red and Green into t3
+    or t3, t3, t2              # Combine with Blue into t3
+
+    # Store the 16-bit RGB565 pixel in memory
+    sh t3, 0(s2)               # Store RGB565 pixel
+
+    # Increment pointers and pixel count
+    addi s1, s1, 3             # Move source pointer by 3 bytes
+    addi s2, s2, 2             # Move destination pointer by 2 bytes
+    addi s3, s3, 1             # Increment pixel counter
+    j loop_convert             # Repeat loop
+
+end_convert:
+    # Restore saved registers
+    lw s0, 0(sp)               # Restore s0
+    lw s1, 4(sp)               # Restore s1
+    lw s2, 8(sp)               # Restore s2
+    lw s3, 12(sp)              # Restore s3
+    addi sp, sp, 16            # Restore stack pointer
+
+    # Return from the subroutine
+    jalr zero, ra, 0           # Return to caller
+
+
+    
 
 
